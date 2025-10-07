@@ -121,12 +121,88 @@
             margin-top: 15px;
         }
 
+        .pump-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .pump-card::before {
+            background: linear-gradient(90deg, #ffd700, #ff6b6b);
+        }
+
+        .pump-card .card-title {
+            color: rgba(255,255,255,0.9);
+        }
+
+        .pump-card .card-value {
+            color: white;
+        }
+
+        .pump-control {
+            margin-top: 20px;
+        }
+
+        .pump-button {
+            width: 100%;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            font-weight: bold;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .pump-button.on {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .pump-button.on:hover {
+            background: #45a049;
+            transform: scale(1.05);
+        }
+
+        .pump-button.off {
+            background: #f44336;
+            color: white;
+        }
+
+        .pump-button.off:hover {
+            background: #da190b;
+            transform: scale(1.05);
+        }
+
+        .pump-button:active {
+            transform: scale(0.98);
+        }
+
+        .pump-status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .pump-status.active {
+            background: rgba(76, 175, 80, 0.3);
+        }
+
+        .pump-status.inactive {
+            background: rgba(244, 67, 54, 0.3);
+        }
+
         .chart-card {
             grid-column: 1 / -1;
             background: white;
             border-radius: 20px;
             padding: 30px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            position: relative;
         }
 
         .chart-card::before {
@@ -209,6 +285,10 @@
             .card-value {
                 font-size: 2.5em;
             }
+
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -216,7 +296,7 @@
     <div class="container">
         <header>
             <h1>🌾 Farm Sensor Dashboard</h1>
-            <p class="subtitle">ระบบติดตามสภาพแวดล้อมฟาร์มแบบเรียลไทม์</p>
+            <p class="subtitle">ระบบติดตามสภาพแวดล้อมและควบคุมฟาร์มแบบเรียลไทม์</p>
             <div class="status" id="status">
                 <span id="statusText">🔄 กำลังเชื่อมต่อ...</span>
             </div>
@@ -260,18 +340,31 @@
                 </div>
                 <div class="card-time" id="lastUpdate">อัพเดทล่าสุด: --</div>
             </div>
+
+            <div class="card pump-card">
+                <div class="card-icon">🚰</div>
+                <div class="card-title">ควบคุมปั๊มน้ำ</div>
+                <div class="pump-control">
+                    <button class="pump-button off" id="pumpButton" onclick="togglePump()">
+                        🚰 เปิดปั๊ม
+                    </button>
+                    <div class="pump-status inactive" id="pumpStatus">
+                        ⚫ ปั๊มปิดอยู่
+                    </div>
+                </div>
+                <div class="card-time" id="pumpTime">อัพเดทล่าสุด: --</div>
+            </div>
         </div>
 
-        <div class="chart-card" id="chartCard" style="display: none; position: relative;">
+        <div class="chart-card" id="chartCard" style="display: none;">
             <h3 class="chart-title">📊 กราฟข้อมูลย้อนหลัง</h3>
             <canvas id="sensorChart"></canvas>
         </div>
     </div>
 
     <script type="module">
-        // Firebase Configuration
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getDatabase, ref, onValue } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+        import { getDatabase, ref, onValue, set } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyAy9DhGdLhN1n_UN8yKhcCkghxfnU6zU04",
@@ -283,11 +376,9 @@
             appId: "1:950997392883:web:a46408bf5c9fba4ac58686"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
 
-        // Data storage for chart
         const chartData = {
             labels: [],
             light: [],
@@ -295,52 +386,92 @@
         };
 
         const maxDataPoints = 20;
+        let currentPumpState = false;
 
-        // Listen to sensor data
+        // ฟังก์ชันควบคุมปั๊ม
+        window.togglePump = function() {
+            const newState = !currentPumpState;
+            const pumpControlRef = ref(database, 'control/pumpControl');
+            
+            set(pumpControlRef, newState)
+                .then(() => {
+                    console.log('Pump command sent:', newState);
+                })
+                .catch((error) => {
+                    console.error('Error sending pump command:', error);
+                    alert('เกิดข้อผิดพลาดในการส่งคำสั่ง');
+                });
+        };
+
+        // ฟังก์ชันอัพเดทแสดงผลสถานะปั๊ม
+        function updatePumpUI(state) {
+            currentPumpState = state;
+            const button = document.getElementById('pumpButton');
+            const status = document.getElementById('pumpStatus');
+            
+            if (state) {
+                button.className = 'pump-button on';
+                button.innerHTML = '🚰 ปิดปั๊ม';
+                status.className = 'pump-status active';
+                status.innerHTML = '🟢 ปั๊มเปิดอยู่';
+            } else {
+                button.className = 'pump-button off';
+                button.innerHTML = '🚰 เปิดปั๊ม';
+                status.className = 'pump-status inactive';
+                status.innerHTML = '⚫ ปั๊มปิดอยู่';
+            }
+            
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('th-TH');
+            document.getElementById('pumpTime').textContent = 'อัพเดทล่าสุด: ' + timeString;
+        }
+
+        // ฟังสถานะปั๊มจาก Firebase
+        const pumpStatusRef = ref(database, 'status/pumpStatus');
+        onValue(pumpStatusRef, (snapshot) => {
+            const state = snapshot.val();
+            if (state !== null) {
+                updatePumpUI(state);
+            }
+        });
+
+        // ฟังข้อมูลเซ็นเซอร์
         const sensorsRef = ref(database, 'sensors');
         
         onValue(sensorsRef, (snapshot) => {
             const data = snapshot.val();
             
             if (data) {
-                // Hide loading, show dashboard
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('dashboard').style.display = 'grid';
                 document.getElementById('chartCard').style.display = 'block';
 
-                // Update status
                 const statusEl = document.getElementById('status');
                 const statusText = document.getElementById('statusText');
                 statusEl.className = 'status connected';
                 statusText.textContent = '✅ เชื่อมต่อสำเร็จ';
 
-                // Update light value
                 const light = data.light || 0;
                 document.getElementById('lightValue').textContent = light;
                 document.getElementById('lightLevel').style.width = light + '%';
 
-                // Update temperature value
                 const temp = data.temperature || 0;
                 document.getElementById('tempValue').textContent = temp.toFixed(1);
                 const tempPercent = Math.min(Math.max(((temp - 0) / 50) * 100, 0), 100);
                 document.getElementById('tempLevel').style.width = tempPercent + '%';
 
-                // Update uptime
                 const timestamp = data.timestamp || 0;
                 const uptimeMinutes = Math.floor(timestamp / 60);
                 document.getElementById('uptimeValue').textContent = uptimeMinutes;
 
-                // Update last update time
                 const now = new Date();
                 const timeString = now.toLocaleTimeString('th-TH');
                 document.getElementById('lightTime').textContent = 'อัพเดทล่าสุด: ' + timeString;
                 document.getElementById('tempTime').textContent = 'อัพเดทล่าสุด: ' + timeString;
                 document.getElementById('lastUpdate').textContent = 'อัพเดทล่าสุด: ' + timeString;
 
-                // Update chart data
                 updateChartData(timeString, light, temp);
             } else {
-                // No data
                 const statusEl = document.getElementById('status');
                 const statusText = document.getElementById('statusText');
                 statusEl.className = 'status disconnected';
@@ -359,7 +490,6 @@
             chartData.light.push(light);
             chartData.temperature.push(temp);
 
-            // Keep only last maxDataPoints
             if (chartData.labels.length > maxDataPoints) {
                 chartData.labels.shift();
                 chartData.light.shift();
@@ -369,7 +499,6 @@
             updateChart();
         }
 
-        // Chart.js setup
         const ctx = document.getElementById('sensorChart');
         let chart = null;
 
@@ -407,9 +536,6 @@
                         plugins: {
                             legend: {
                                 position: 'top',
-                            },
-                            title: {
-                                display: false
                             }
                         },
                         scales: {
