@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌾 Farm Sensor Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 8px 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            margin-top: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .status.connected {
+            background: rgba(76, 175, 80, 0.3);
+        }
+
+        .status.disconnected {
+            background: rgba(244, 67, 54, 0.3);
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .card-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .card-title {
+            font-size: 1.2em;
+            color: #666;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .card-value {
+            font-size: 3em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .card-unit {
+            font-size: 1.5em;
+            color: #999;
+            margin-left: 5px;
+        }
+
+        .card-time {
+            font-size: 0.9em;
+            color: #999;
+            margin-top: 15px;
+        }
+
+        .chart-card {
+            grid-column: 1 / -1;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .chart-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .chart-title {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        canvas {
+            max-width: 100%;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 1.2em;
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        .light-indicator {
+            width: 100%;
+            height: 20px;
+            background: linear-gradient(to right, #1a1a1a, #ffd700);
+            border-radius: 10px;
+            margin-top: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .light-level {
+            height: 100%;
+            background: rgba(255, 215, 0, 0.5);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        .temp-indicator {
+            width: 100%;
+            height: 20px;
+            background: linear-gradient(to right, #2196F3, #FF5722);
+            border-radius: 10px;
+            margin-top: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .temp-level {
+            height: 100%;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+            
+            .card-value {
+                font-size: 2.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌾 Farm Sensor Dashboard</h1>
+            <p class="subtitle">ระบบติดตามสภาพแวดล้อมฟาร์มแบบเรียลไทม์</p>
+            <div class="status" id="status">
+                <span id="statusText">🔄 กำลังเชื่อมต่อ...</span>
+            </div>
+        </header>
+
+        <div id="loading" class="loading">กำลังโหลดข้อมูล</div>
+
+        <div class="dashboard" id="dashboard" style="display: none;">
+            <div class="card">
+                <div class="card-icon">💡</div>
+                <div class="card-title">ความสว่าง</div>
+                <div class="card-value">
+                    <span id="lightValue">--</span>
+                    <span class="card-unit">%</span>
+                </div>
+                <div class="light-indicator">
+                    <div class="light-level" id="lightLevel" style="width: 0%"></div>
+                </div>
+                <div class="card-time" id="lightTime">อัพเดทล่าสุด: --</div>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">🌡️</div>
+                <div class="card-title">อุณหภูมิ</div>
+                <div class="card-value">
+                    <span id="tempValue">--</span>
+                    <span class="card-unit">°C</span>
+                </div>
+                <div class="temp-indicator">
+                    <div class="temp-level" id="tempLevel" style="width: 0%"></div>
+                </div>
+                <div class="card-time" id="tempTime">อัพเดทล่าสุด: --</div>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">⏰</div>
+                <div class="card-title">เวลาทำงานระบบ</div>
+                <div class="card-value">
+                    <span id="uptimeValue">--</span>
+                    <span class="card-unit">นาที</span>
+                </div>
+                <div class="card-time" id="lastUpdate">อัพเดทล่าสุด: --</div>
+            </div>
+        </div>
+
+        <div class="chart-card" id="chartCard" style="display: none; position: relative;">
+            <h3 class="chart-title">📊 กราฟข้อมูลย้อนหลัง</h3>
+            <canvas id="sensorChart"></canvas>
+        </div>
+    </div>
+
+    <script type="module">
+        // Firebase Configuration
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getDatabase, ref, onValue } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAy9DhGdLhN1n_UN8yKhcCkghxfnU6zU04",
+            authDomain: "pachcha-95e16.firebaseapp.com",
+            databaseURL: "https://pachcha-95e16-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "pachcha-95e16",
+            storageBucket: "pachcha-95e16.firebasestorage.app",
+            messagingSenderId: "950997392883",
+            appId: "1:950997392883:web:a46408bf5c9fba4ac58686"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // Data storage for chart
+        const chartData = {
+            labels: [],
+            light: [],
+            temperature: []
+        };
+
+        const maxDataPoints = 20;
+
+        // Listen to sensor data
+        const sensorsRef = ref(database, 'sensors');
+        
+        onValue(sensorsRef, (snapshot) => {
+            const data = snapshot.val();
+            
+            if (data) {
+                // Hide loading, show dashboard
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'grid';
+                document.getElementById('chartCard').style.display = 'block';
+
+                // Update status
+                const statusEl = document.getElementById('status');
+                const statusText = document.getElementById('statusText');
+                statusEl.className = 'status connected';
+                statusText.textContent = '✅ เชื่อมต่อสำเร็จ';
+
+                // Update light value
+                const light = data.light || 0;
+                document.getElementById('lightValue').textContent = light;
+                document.getElementById('lightLevel').style.width = light + '%';
+
+                // Update temperature value
+                const temp = data.temperature || 0;
+                document.getElementById('tempValue').textContent = temp.toFixed(1);
+                const tempPercent = Math.min(Math.max(((temp - 0) / 50) * 100, 0), 100);
+                document.getElementById('tempLevel').style.width = tempPercent + '%';
+
+                // Update uptime
+                const timestamp = data.timestamp || 0;
+                const uptimeMinutes = Math.floor(timestamp / 60);
+                document.getElementById('uptimeValue').textContent = uptimeMinutes;
+
+                // Update last update time
+                const now = new Date();
+                const timeString = now.toLocaleTimeString('th-TH');
+                document.getElementById('lightTime').textContent = 'อัพเดทล่าสุด: ' + timeString;
+                document.getElementById('tempTime').textContent = 'อัพเดทล่าสุด: ' + timeString;
+                document.getElementById('lastUpdate').textContent = 'อัพเดทล่าสุด: ' + timeString;
+
+                // Update chart data
+                updateChartData(timeString, light, temp);
+            } else {
+                // No data
+                const statusEl = document.getElementById('status');
+                const statusText = document.getElementById('statusText');
+                statusEl.className = 'status disconnected';
+                statusText.textContent = '⚠️ ไม่พบข้อมูล';
+            }
+        }, (error) => {
+            console.error('Error reading data:', error);
+            const statusEl = document.getElementById('status');
+            const statusText = document.getElementById('statusText');
+            statusEl.className = 'status disconnected';
+            statusText.textContent = '❌ เชื่อมต่อล้มเหลว';
+        });
+
+        function updateChartData(time, light, temp) {
+            chartData.labels.push(time);
+            chartData.light.push(light);
+            chartData.temperature.push(temp);
+
+            // Keep only last maxDataPoints
+            if (chartData.labels.length > maxDataPoints) {
+                chartData.labels.shift();
+                chartData.light.shift();
+                chartData.temperature.shift();
+            }
+
+            updateChart();
+        }
+
+        // Chart.js setup
+        const ctx = document.getElementById('sensorChart');
+        let chart = null;
+
+        function updateChart() {
+            if (!chart) {
+                chart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: chartData.labels,
+                        datasets: [
+                            {
+                                label: 'ความสว่าง (%)',
+                                data: chartData.light,
+                                borderColor: '#FFD700',
+                                backgroundColor: 'rgba(255, 215, 0, 0.1)',
+                                tension: 0.4,
+                                yAxisID: 'y'
+                            },
+                            {
+                                label: 'อุณหภูมิ (°C)',
+                                data: chartData.temperature,
+                                borderColor: '#FF6384',
+                                backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                                tension: 0.4,
+                                yAxisID: 'y1'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false,
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            title: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                title: {
+                                    display: true,
+                                    text: 'ความสว่าง (%)'
+                                },
+                                min: 0,
+                                max: 100
+                            },
+                            y1: {
+                                type: 'linear',
+                                display: true,
+                                position: 'right',
+                                title: {
+                                    display: true,
+                                    text: 'อุณหภูมิ (°C)'
+                                },
+                                grid: {
+                                    drawOnChartArea: false,
+                                }
+                            }
+                        }
+                    }
+                });
+            } else {
+                chart.data.labels = chartData.labels;
+                chart.data.datasets[0].data = chartData.light;
+                chart.data.datasets[1].data = chartData.temperature;
+                chart.update();
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</body>
+</html>
