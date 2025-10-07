@@ -93,10 +93,15 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         }
 
+        .btn:active {
+            transform: translateY(0);
+        }
+
         .btn-primary { background: var(--primary); }
         .btn-success { background: var(--success); }
         .btn-warning { background: var(--warning); }
         .btn-danger { background: var(--danger); }
+        .btn-info { background: var(--info); }
 
         .status {
             display: inline-block;
@@ -105,12 +110,20 @@
             border-radius: 20px;
             margin-top: 15px;
             backdrop-filter: blur(10px);
+            animation: pulse 2s infinite;
         }
 
-        .status.connected { background: rgba(76, 175, 80, 0.3); }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .status.connected { 
+            background: rgba(76, 175, 80, 0.3);
+            animation: none;
+        }
         .status.disconnected { background: rgba(244, 67, 54, 0.3); }
 
-        /* Stats Summary */
         .stats-summary {
             background: var(--card-bg);
             border-radius: 20px;
@@ -127,6 +140,11 @@
             padding: 15px;
             background: rgba(102, 126, 234, 0.1);
             border-radius: 15px;
+            transition: transform 0.3s;
+        }
+
+        .stat-item:hover {
+            transform: scale(1.05);
         }
 
         .stat-label {
@@ -267,7 +285,6 @@
         .pump-status.active { background: rgba(76, 175, 80, 0.3); }
         .pump-status.inactive { background: rgba(244, 67, 54, 0.3); }
 
-        /* Auto Mode Controls */
         .auto-mode-section {
             margin-top: 20px;
             padding: 15px;
@@ -353,7 +370,11 @@
             font-size: 1em;
         }
 
-        /* Timer Section */
+        .input-group input:focus {
+            outline: none;
+            border-color: rgba(255,255,255,0.6);
+        }
+
         .timer-section {
             margin-top: 20px;
         }
@@ -363,6 +384,8 @@
             flex-direction: column;
             gap: 10px;
             margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
         }
 
         .timer-item {
@@ -401,9 +424,13 @@
             border: none;
             cursor: pointer;
             transition: all 0.3s;
+            font-weight: bold;
         }
 
-        /* Chart Card */
+        .btn-small:hover {
+            transform: scale(1.1);
+        }
+
         .chart-card {
             grid-column: 1 / -1;
             background: var(--card-bg);
@@ -430,11 +457,14 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
         }
 
         .chart-controls {
             display: flex;
             gap: 10px;
+            flex-wrap: wrap;
         }
 
         .chart-btn {
@@ -445,6 +475,7 @@
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s;
+            font-weight: bold;
         }
 
         .chart-btn.active {
@@ -452,11 +483,14 @@
             color: white;
         }
 
+        .chart-btn:hover {
+            transform: scale(1.05);
+        }
+
         canvas {
             max-width: 100%;
         }
 
-        /* Alert System */
         .alert-container {
             position: fixed;
             top: 20px;
@@ -523,9 +557,14 @@
             cursor: pointer;
             font-size: 1.5em;
             color: var(--text-light);
+            transition: all 0.3s;
         }
 
-        /* Modal */
+        .alert-close:hover {
+            color: var(--text-primary);
+            transform: scale(1.2);
+        }
+
         .modal {
             display: none;
             position: fixed;
@@ -570,6 +609,12 @@
             font-size: 2em;
             cursor: pointer;
             color: var(--text-light);
+            transition: all 0.3s;
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
+            transform: rotate(90deg);
         }
 
         .settings-section {
@@ -636,12 +681,25 @@
             font-size: 1.2em;
         }
 
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
         @media (max-width: 768px) {
             h1 { font-size: 2em; }
             .card-value { font-size: 2.5em; }
             .dashboard { grid-template-columns: 1fr; }
             .stats-summary { grid-template-columns: 1fr; }
             .alert-container { right: 10px; left: 10px; max-width: none; }
+            .header-controls { gap: 10px; }
+            .btn { padding: 8px 15px; font-size: 0.9em; }
         }
     </style>
 </head>
@@ -649,7 +707,7 @@
     <div class="container">
         <header>
             <h1>🌾 Farm Sensor Dashboard Pro</h1>
-            <p class="subtitle">ระบบติดตามและควบคุมฟาร์มอัจฉริยะ</p>
+            <p class="subtitle">ระบบติดตามและควบคุมฟาร์มอัจฉริยะแบบเรียลไทม์</p>
             <div class="status" id="status">
                 <span id="statusText">🔄 กำลังเชื่อมต่อ...</span>
             </div>
@@ -657,13 +715,12 @@
                 <button class="btn btn-primary" onclick="toggleTheme()">🌓 สลับธีม</button>
                 <button class="btn btn-success" onclick="openSettings()">⚙️ ตั้งค่า</button>
                 <button class="btn btn-warning" onclick="downloadCSV()">📥 ดาวน์โหลด CSV</button>
-                <button class="btn" onclick="openTimerModal()">⏰ ตั้งเวลา</button>
+                <button class="btn btn-info" onclick="openTimerModal()">⏰ ตั้งเวลา</button>
             </div>
         </header>
 
         <div id="loading" class="loading">กำลังโหลดข้อมูล</div>
 
-        <!-- Stats Summary -->
         <div class="stats-summary" id="statsSummary" style="display: none;">
             <div class="stat-item">
                 <div class="stat-label">🌡️ อุณหภูมิเฉลี่ย</div>
@@ -726,7 +783,6 @@
                     </div>
                 </div>
 
-                <!-- Auto Mode Section -->
                 <div class="auto-mode-section">
                     <div class="toggle-switch">
                         <span style="font-weight: bold;">🤖 โหมดอัตโนมัติ</span>
@@ -738,11 +794,11 @@
                     <div class="threshold-inputs" id="thresholdInputs" style="display: none;">
                         <div class="input-group">
                             <label>🔥 อุณหภูมิเปิดปั๊ม (°C)</label>
-                            <input type="number" id="tempHigh" value="35" min="0" max="50">
+                            <input type="number" id="tempHigh" value="35" min="0" max="50" onchange="updateThresholds()">
                         </div>
                         <div class="input-group">
                             <label>❄️ อุณหภูมิปิดปั๊ม (°C)</label>
-                            <input type="number" id="tempLow" value="25" min="0" max="50">
+                            <input type="number" id="tempLow" value="25" min="0" max="50" onchange="updateThresholds()">
                         </div>
                     </div>
                 </div>
@@ -753,7 +809,7 @@
 
         <div class="chart-card" id="chartCard" style="display: none;">
             <div class="chart-title">
-                <span>📊 กราฟข้อมูล</span>
+                <span>📊 กราฟข้อมูลย้อนหลัง</span>
                 <div class="chart-controls">
                     <button class="chart-btn active" onclick="changeChartPeriod('realtime')">เรียลไทม์</button>
                     <button class="chart-btn" onclick="changeChartPeriod('daily')">รายวัน</button>
@@ -764,14 +820,12 @@
         </div>
     </div>
 
-    <!-- Alert Container -->
     <div class="alert-container" id="alertContainer"></div>
 
-    <!-- Settings Modal -->
     <div class="modal" id="settingsModal">
         <div class="modal-content">
             <div class="modal-header">
-                <div class="modal-title">⚙️ ตั้งค่า</div>
+                <div class="modal-title">⚙️ ตั้งค่าระบบ</div>
                 <span class="modal-close" onclick="closeSettings()">×</span>
             </div>
 
@@ -860,22 +914,21 @@
         </div>
     </div>
 
-    <!-- Timer Modal -->
     <div class="modal" id="timerModal">
         <div class="modal-content">
             <div class="modal-header">
-                <div class="modal-title">⏰ ตั้งเวลารดน้ำ</div>
+                <div class="modal-title">⏰ ตั้งเวลารดน้ำอัตโนมัติ</div>
                 <span class="modal-close" onclick="closeTimerModal()">×</span>
             </div>
 
             <div class="settings-section">
                 <div class="input-group">
                     <label>🕐 เวลา</label>
-                    <input type="time" id="timerTime" style="width: 100%; padding: 10px; border-radius: 8px;">
+                    <input type="time" id="timerTime" style="width: 100%; padding: 10px; border-radius: 8px; border: 2px solid #ddd;">
                 </div>
                 <div class="input-group" style="margin-top: 15px;">
                     <label>⏱️ ระยะเวลารด (นาที)</label>
-                    <input type="number" id="timerDuration" value="5" min="1" max="60" style="width: 100%; padding: 10px; border-radius: 8px;">
+                    <input type="number" id="timerDuration" value="5" min="1" max="60" style="width: 100%; padding: 10px; border-radius: 8px; border: 2px solid #ddd;">
                 </div>
                 <button class="btn btn-success" style="width: 100%; margin-top: 15px;" onclick="addTimer()">➕ เพิ่มตารางรดน้ำ</button>
             </div>
@@ -908,7 +961,6 @@
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
 
-        // Global variables
         const chartData = {
             labels: [],
             light: [],
@@ -933,9 +985,9 @@
         let currentChartPeriod = 'realtime';
         const maxDataPoints = 20;
 
-        // Theme Management
         window.toggleTheme = function() {
             document.body.classList.toggle('dark-mode');
+            showAlert('success', 'สำเร็จ', 'เปลี่ยนธีมแล้ว');
         };
 
         window.changeTheme = function(theme) {
@@ -954,9 +1006,10 @@
             root.style.setProperty('--primary', colors.primary);
             root.style.setProperty('--secondary', colors.secondary);
             root.style.setProperty('--bg-gradient', `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`);
+            
+            showAlert('success', 'สำเร็จ', `เปลี่ยนเป็นธีม ${theme}`);
         };
 
-        // Settings Modal
         window.openSettings = function() {
             document.getElementById('settingsModal').classList.add('active');
         };
@@ -965,7 +1018,6 @@
             document.getElementById('settingsModal').classList.remove('active');
         };
 
-        // Timer Modal
         window.openTimerModal = function() {
             document.getElementById('timerModal').classList.add('active');
         };
@@ -974,12 +1026,10 @@
             document.getElementById('timerModal').classList.remove('active');
         };
 
-        // Card Visibility
         window.toggleCard = function(cardId) {
             document.getElementById(cardId).classList.toggle('hidden');
         };
 
-        // Pump Control
         window.togglePump = function() {
             const newState = !currentPumpState;
             const pumpControlRef = ref(database, 'control/pumpControl');
@@ -995,11 +1045,32 @@
                 });
         };
 
-        // Auto Mode
         window.toggleAutoMode = function() {
             autoModeEnabled = document.getElementById('autoModeToggle').checked;
             document.getElementById('thresholdInputs').style.display = autoModeEnabled ? 'grid' : 'none';
-            showAlert('success', 'โหมดอัตโนมัติ', `${autoModeEnabled ? 'เปิด' : 'ปิด'}โหมดอัตโนมัติแล้ว`);
+            
+            const autoModeRef = ref(database, 'control/autoMode');
+            set(autoModeRef, autoModeEnabled)
+                .then(() => {
+                    showAlert('success', 'โหมดอัตโนมัติ', `${autoModeEnabled ? 'เปิด' : 'ปิด'}โหมดอัตโนมัติแล้ว`);
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
+        };
+
+        window.updateThresholds = function() {
+            const tempHigh = parseFloat(document.getElementById('tempHigh').value);
+            const tempLow = parseFloat(document.getElementById('tempLow').value);
+            
+            if (tempHigh <= tempLow) {
+                showAlert('warning', 'คำเตือน', 'อุณหภูมิเปิดปั๊มต้องมากกว่าอุณหภูมิปิดปั๊ม');
+                return;
+            }
+            
+            set(ref(database, 'control/tempHighThreshold'), tempHigh);
+            set(ref(database, 'control/tempLowThreshold'), tempLow);
+            showAlert('success', 'สำเร็จ', 'อัพเดทค่า Threshold แล้ว');
         };
 
         function checkAutoMode(temp) {
@@ -1017,7 +1088,6 @@
             }
         }
 
-        // Timer Functions
         window.addTimer = function() {
             const time = document.getElementById('timerTime').value;
             const duration = parseInt(document.getElementById('timerDuration').value);
@@ -1054,7 +1124,7 @@
                         <div class="timer-duration">⏱️ ${timer.duration} นาที</div>
                     </div>
                     <div class="timer-actions">
-                        <button class="btn-small btn-danger" onclick="deleteTimer(${timer.id})">🗑️ ลบ</button>
+                        <button class="btn-small btn-danger" onclick="deleteTimer(${timer.id})" style="background: var(--danger); color: white;">🗑️ ลบ</button>
                     </div>
                 </div>
             `).join('');
@@ -1065,13 +1135,15 @@
             const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
             timers.forEach(timer => {
-                if (timer.time === currentTime && !currentPumpState) {
+                if (timer.time === currentTime && !currentPumpState && !timer.executed) {
                     set(ref(database, 'control/pumpControl'), true);
                     showAlert('success', '⏰ ตารางรดน้ำ', `เริ่มรดน้ำตามตาราง ${timer.time}`);
+                    timer.executed = true;
                     
                     setTimeout(() => {
                         set(ref(database, 'control/pumpControl'), false);
                         showAlert('success', '⏰ ตารางรดน้ำ', 'หยุดรดน้ำตามตาราง');
+                        timer.executed = false;
                     }, timer.duration * 60 * 1000);
                 }
             });
@@ -1079,10 +1151,8 @@
 
         setInterval(checkTimers, 60000);
 
-        // Alert System
         function showAlert(type, title, message) {
             const container = document.getElementById('alertContainer');
-            const alertId = Date.now();
             
             const alert = document.createElement('div');
             alert.className = `alert ${type}`;
@@ -1096,7 +1166,6 @@
             `;
             
             container.appendChild(alert);
-            
             setTimeout(() => alert.remove(), 5000);
         }
 
@@ -1137,7 +1206,6 @@
             }
         }
 
-        // Update Pump UI
         function updatePumpUI(state) {
             currentPumpState = state;
             const button = document.getElementById('pumpButton');
@@ -1159,7 +1227,6 @@
             document.getElementById('pumpTime').textContent = 'อัพเดทล่าสุด: ' + now.toLocaleTimeString('th-TH');
         }
 
-        // Statistics
         function updateStatistics() {
             if (allData.temperature.length === 0) return;
 
@@ -1177,7 +1244,6 @@
             document.getElementById('avgLight').textContent = avgLight + '%';
         }
 
-        // Chart Period
         window.changeChartPeriod = function(period) {
             currentChartPeriod = period;
             document.querySelectorAll('.chart-btn').forEach(btn => btn.classList.remove('active'));
@@ -1185,7 +1251,6 @@
             showAlert('success', 'สำเร็จ', `เปลี่ยนเป็นโหมด${period === 'realtime' ? 'เรียลไทม์' : period === 'daily' ? 'รายวัน' : 'รายสัปดาห์'}`);
         };
 
-        // Download CSV
         window.downloadCSV = function() {
             if (allData.timestamps.length === 0) {
                 showAlert('warning', 'คำเตือน', 'ยังไม่มีข้อมูลให้ดาวน์โหลด');
@@ -1200,8 +1265,9 @@
             const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             const url = URL.createObjectURL(blob);
+            const date = new Date().toISOString().split('T')[0];
             link.setAttribute('href', url);
-            link.setAttribute('download', `farm_data_${new Date().getTime()}.csv`);
+            link.setAttribute('download', `farm_data_${date}.csv`);
             link.style.visibility = 'hidden';
             document.body.appendChild(link);
             link.click();
@@ -1210,11 +1276,20 @@
             showAlert('success', 'สำเร็จ', 'ดาวน์โหลดข้อมูล CSV แล้ว');
         };
 
-        // Firebase Listeners
         const pumpStatusRef = ref(database, 'status/pumpStatus');
         onValue(pumpStatusRef, (snapshot) => {
             const state = snapshot.val();
             if (state !== null) updatePumpUI(state);
+        });
+
+        const autoModeRef = ref(database, 'control/autoMode');
+        onValue(autoModeRef, (snapshot) => {
+            const state = snapshot.val();
+            if (state !== null) {
+                autoModeEnabled = state;
+                document.getElementById('autoModeToggle').checked = state;
+                document.getElementById('thresholdInputs').style.display = state ? 'grid' : 'none';
+            }
         });
 
         const sensorsRef = ref(database, 'sensors');
@@ -1244,19 +1319,16 @@
                 document.getElementById('tempTime').textContent = 'อัพเดทล่าสุด: ' + timeString;
                 document.getElementById('lastUpdate').textContent = 'อัพเดทล่าสุด: ' + timeString;
 
-                // Store all data
                 allData.light.push(light);
                 allData.temperature.push(temp);
                 allData.timestamps.push(timeString);
 
-                // Keep last 100 data points
                 if (allData.light.length > 100) {
                     allData.light.shift();
                     allData.temperature.shift();
                     allData.timestamps.shift();
                 }
 
-                // Update chart data
                 chartData.labels.push(timeString);
                 chartData.light.push(light);
                 chartData.temperature.push(temp);
@@ -1270,11 +1342,14 @@
                 updateChart();
                 updateStatistics();
                 checkAlerts(light, temp);
-                checkAutoMode(temp);
             }
+        }, (error) => {
+            console.error('Error:', error);
+            const statusEl = document.getElementById('status');
+            statusEl.className = 'status disconnected';
+            statusEl.querySelector('#statusText').textContent = '❌ เชื่อมต่อล้มเหลว';
         });
 
-        // Chart
         const ctx = document.getElementById('sensorChart');
         let chart = null;
 
@@ -1291,7 +1366,8 @@
                                 borderColor: '#FFD700',
                                 backgroundColor: 'rgba(255, 215, 0, 0.1)',
                                 tension: 0.4,
-                                yAxisID: 'y'
+                                yAxisID: 'y',
+                                fill: true
                             },
                             {
                                 label: 'อุณหภูมิ (°C)',
@@ -1299,14 +1375,24 @@
                                 borderColor: '#FF6384',
                                 backgroundColor: 'rgba(255, 99, 132, 0.1)',
                                 tension: 0.4,
-                                yAxisID: 'y1'
+                                yAxisID: 'y1',
+                                fill: true
                             }
                         ]
                     },
                     options: {
                         responsive: true,
+                        maintainAspectRatio: true,
                         interaction: { mode: 'index', intersect: false },
-                        plugins: { legend: { position: 'top' } },
+                        plugins: { 
+                            legend: { 
+                                position: 'top',
+                                labels: {
+                                    font: { size: 14 },
+                                    padding: 15
+                                }
+                            }
+                        },
                         scales: {
                             y: {
                                 type: 'linear',
@@ -1330,12 +1416,13 @@
                 chart.data.labels = chartData.labels;
                 chart.data.datasets[0].data = chartData.light;
                 chart.data.datasets[1].data = chartData.temperature;
-                chart.update();
+                chart.update('none');
             }
         }
 
-        // Expose functions to window
         window.deleteTimer = deleteTimer;
+        
+        console.log('🌾 Farm Dashboard System v2.0 Loaded');
     </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
