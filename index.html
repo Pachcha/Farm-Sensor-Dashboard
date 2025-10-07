@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🌾 Farm Sensor Dashboard</title>
+    <title>🌾 Farm Sensor Dashboard Pro</title>
     <style>
         * {
             margin: 0;
@@ -11,16 +11,41 @@
             box-sizing: border-box;
         }
 
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --success: #4CAF50;
+            --danger: #f44336;
+            --warning: #ff9800;
+            --info: #2196F3;
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --card-bg: white;
+            --text-primary: #333;
+            --text-secondary: #666;
+            --text-light: #999;
+            --shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        body.dark-mode {
+            --bg-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            --card-bg: #2d2d44;
+            --text-primary: #ffffff;
+            --text-secondary: #b8b8d1;
+            --text-light: #8888aa;
+            --shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--bg-gradient);
             min-height: 100vh;
             padding: 20px;
-            color: #333;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
         }
 
@@ -28,6 +53,7 @@
             text-align: center;
             color: white;
             margin-bottom: 30px;
+            position: relative;
         }
 
         h1 {
@@ -41,6 +67,37 @@
             opacity: 0.9;
         }
 
+        .header-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.3s;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .btn-primary { background: var(--primary); }
+        .btn-success { background: var(--success); }
+        .btn-warning { background: var(--warning); }
+        .btn-danger { background: var(--danger); }
+
         .status {
             display: inline-block;
             padding: 8px 20px;
@@ -50,12 +107,38 @@
             backdrop-filter: blur(10px);
         }
 
-        .status.connected {
-            background: rgba(76, 175, 80, 0.3);
+        .status.connected { background: rgba(76, 175, 80, 0.3); }
+        .status.disconnected { background: rgba(244, 67, 54, 0.3); }
+
+        /* Stats Summary */
+        .stats-summary {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: var(--shadow);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
         }
 
-        .status.disconnected {
-            background: rgba(244, 67, 54, 0.3);
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 15px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: var(--primary);
         }
 
         .dashboard {
@@ -66,13 +149,17 @@
         }
 
         .card {
-            background: white;
+            background: var(--card-bg);
             border-radius: 20px;
             padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            box-shadow: var(--shadow);
             transition: transform 0.3s, box-shadow 0.3s;
             position: relative;
             overflow: hidden;
+        }
+
+        .card.hidden {
+            display: none;
         }
 
         .card:hover {
@@ -87,7 +174,7 @@
             left: 0;
             right: 0;
             height: 5px;
-            background: linear-gradient(90deg, #667eea, #764ba2);
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
         }
 
         .card-icon {
@@ -97,7 +184,7 @@
 
         .card-title {
             font-size: 1.2em;
-            color: #666;
+            color: var(--text-secondary);
             margin-bottom: 10px;
             font-weight: 500;
         }
@@ -105,37 +192,31 @@
         .card-value {
             font-size: 3em;
             font-weight: bold;
-            color: #333;
+            color: var(--text-primary);
             margin-bottom: 10px;
         }
 
         .card-unit {
             font-size: 1.5em;
-            color: #999;
+            color: var(--text-light);
             margin-left: 5px;
         }
 
         .card-time {
             font-size: 0.9em;
-            color: #999;
+            color: var(--text-light);
             margin-top: 15px;
         }
 
         .pump-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
             color: white;
         }
 
-        .pump-card::before {
-            background: linear-gradient(90deg, #ffd700, #ff6b6b);
-        }
-
-        .pump-card .card-title {
+        .pump-card .card-title,
+        .pump-card .card-value,
+        .pump-card .card-time {
             color: rgba(255,255,255,0.9);
-        }
-
-        .pump-card .card-value {
-            color: white;
         }
 
         .pump-control {
@@ -153,25 +234,20 @@
             transition: all 0.3s;
             text-transform: uppercase;
             letter-spacing: 1px;
+            margin-bottom: 10px;
         }
 
         .pump-button.on {
-            background: #4CAF50;
+            background: var(--success);
             color: white;
-        }
-
-        .pump-button.on:hover {
-            background: #45a049;
-            transform: scale(1.05);
         }
 
         .pump-button.off {
-            background: #f44336;
+            background: var(--danger);
             color: white;
         }
 
-        .pump-button.off:hover {
-            background: #da190b;
+        .pump-button:hover {
             transform: scale(1.05);
         }
 
@@ -188,20 +264,152 @@
             font-size: 1.1em;
         }
 
-        .pump-status.active {
-            background: rgba(76, 175, 80, 0.3);
+        .pump-status.active { background: rgba(76, 175, 80, 0.3); }
+        .pump-status.inactive { background: rgba(244, 67, 54, 0.3); }
+
+        /* Auto Mode Controls */
+        .auto-mode-section {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
         }
 
-        .pump-status.inactive {
-            background: rgba(244, 67, 54, 0.3);
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
         }
 
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--success);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .threshold-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-group label {
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .input-group input {
+            padding: 8px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 1em;
+        }
+
+        /* Timer Section */
+        .timer-section {
+            margin-top: 20px;
+        }
+
+        .timer-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .timer-item {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .timer-info {
+            flex: 1;
+        }
+
+        .timer-time {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .timer-duration {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .timer-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-small {
+            padding: 5px 15px;
+            font-size: 0.9em;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        /* Chart Card */
         .chart-card {
             grid-column: 1 / -1;
-            background: white;
+            background: var(--card-bg);
             border-radius: 20px;
             padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            box-shadow: var(--shadow);
             position: relative;
         }
 
@@ -212,17 +420,213 @@
             left: 0;
             right: 0;
             height: 5px;
-            background: linear-gradient(90deg, #667eea, #764ba2);
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
         }
 
         .chart-title {
             font-size: 1.5em;
             margin-bottom: 20px;
-            color: #333;
+            color: var(--text-primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chart-btn {
+            padding: 8px 15px;
+            border: 2px solid var(--primary);
+            background: transparent;
+            color: var(--primary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .chart-btn.active {
+            background: var(--primary);
+            color: white;
         }
 
         canvas {
             max-width: 100%;
+        }
+
+        /* Alert System */
+        .alert-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 400px;
+        }
+
+        .alert {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .alert.warning {
+            border-left: 5px solid var(--warning);
+        }
+
+        .alert.danger {
+            border-left: 5px solid var(--danger);
+        }
+
+        .alert.success {
+            border-left: 5px solid var(--success);
+        }
+
+        .alert-icon {
+            font-size: 2em;
+        }
+
+        .alert-content {
+            flex: 1;
+        }
+
+        .alert-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: var(--text-primary);
+        }
+
+        .alert-message {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+        }
+
+        .alert-close {
+            cursor: pointer;
+            font-size: 1.5em;
+            color: var(--text-light);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            font-size: 2em;
+            cursor: pointer;
+            color: var(--text-light);
+        }
+
+        .settings-section {
+            margin-bottom: 25px;
+        }
+
+        .settings-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: var(--text-primary);
+        }
+
+        .theme-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 15px;
+        }
+
+        .theme-option {
+            padding: 20px;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            border: 3px solid transparent;
+        }
+
+        .theme-option:hover {
+            transform: scale(1.05);
+        }
+
+        .theme-option.active {
+            border-color: var(--primary);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .theme-preview {
+            width: 100%;
+            height: 60px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .card-visibility {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .visibility-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 10px;
         }
 
         .loading {
@@ -232,106 +636,75 @@
             font-size: 1.2em;
         }
 
-        .loading::after {
-            content: '...';
-            animation: dots 1.5s steps(4, end) infinite;
-        }
-
-        @keyframes dots {
-            0%, 20% { content: '.'; }
-            40% { content: '..'; }
-            60%, 100% { content: '...'; }
-        }
-
-        .light-indicator {
-            width: 100%;
-            height: 20px;
-            background: linear-gradient(to right, #1a1a1a, #ffd700);
-            border-radius: 10px;
-            margin-top: 15px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .light-level {
-            height: 100%;
-            background: rgba(255, 215, 0, 0.5);
-            border-radius: 10px;
-            transition: width 0.5s ease;
-        }
-
-        .temp-indicator {
-            width: 100%;
-            height: 20px;
-            background: linear-gradient(to right, #2196F3, #FF5722);
-            border-radius: 10px;
-            margin-top: 15px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .temp-level {
-            height: 100%;
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 10px;
-            transition: width 0.5s ease;
-        }
-
         @media (max-width: 768px) {
-            h1 {
-                font-size: 2em;
-            }
-            
-            .card-value {
-                font-size: 2.5em;
-            }
-
-            .dashboard {
-                grid-template-columns: 1fr;
-            }
+            h1 { font-size: 2em; }
+            .card-value { font-size: 2.5em; }
+            .dashboard { grid-template-columns: 1fr; }
+            .stats-summary { grid-template-columns: 1fr; }
+            .alert-container { right: 10px; left: 10px; max-width: none; }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🌾 Farm Sensor Dashboard</h1>
-            <p class="subtitle">ระบบติดตามสภาพแวดล้อมและควบคุมฟาร์มแบบเรียลไทม์</p>
+            <h1>🌾 Farm Sensor Dashboard Pro</h1>
+            <p class="subtitle">ระบบติดตามและควบคุมฟาร์มอัจฉริยะ</p>
             <div class="status" id="status">
                 <span id="statusText">🔄 กำลังเชื่อมต่อ...</span>
+            </div>
+            <div class="header-controls">
+                <button class="btn btn-primary" onclick="toggleTheme()">🌓 สลับธีม</button>
+                <button class="btn btn-success" onclick="openSettings()">⚙️ ตั้งค่า</button>
+                <button class="btn btn-warning" onclick="downloadCSV()">📥 ดาวน์โหลด CSV</button>
+                <button class="btn" onclick="openTimerModal()">⏰ ตั้งเวลา</button>
             </div>
         </header>
 
         <div id="loading" class="loading">กำลังโหลดข้อมูล</div>
 
+        <!-- Stats Summary -->
+        <div class="stats-summary" id="statsSummary" style="display: none;">
+            <div class="stat-item">
+                <div class="stat-label">🌡️ อุณหภูมิเฉลี่ย</div>
+                <div class="stat-value" id="avgTemp">--</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">🌡️ อุณหภูมิสูงสุด</div>
+                <div class="stat-value" id="maxTemp">--</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">🌡️ อุณหภูมิต่ำสุด</div>
+                <div class="stat-value" id="minTemp">--</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">💡 ความสว่างเฉลี่ย</div>
+                <div class="stat-value" id="avgLight">--</div>
+            </div>
+        </div>
+
         <div class="dashboard" id="dashboard" style="display: none;">
-            <div class="card">
+            <div class="card" id="lightCard">
                 <div class="card-icon">💡</div>
                 <div class="card-title">ความสว่าง</div>
                 <div class="card-value">
                     <span id="lightValue">--</span>
                     <span class="card-unit">%</span>
                 </div>
-                <div class="light-indicator">
-                    <div class="light-level" id="lightLevel" style="width: 0%"></div>
-                </div>
                 <div class="card-time" id="lightTime">อัพเดทล่าสุด: --</div>
             </div>
 
-            <div class="card">
+            <div class="card" id="tempCard">
                 <div class="card-icon">🌡️</div>
                 <div class="card-title">อุณหภูมิ</div>
                 <div class="card-value">
                     <span id="tempValue">--</span>
                     <span class="card-unit">°C</span>
                 </div>
-                <div class="temp-indicator">
-                    <div class="temp-level" id="tempLevel" style="width: 0%"></div>
-                </div>
                 <div class="card-time" id="tempTime">อัพเดทล่าสุด: --</div>
             </div>
 
-            <div class="card">
+            <div class="card" id="uptimeCard">
                 <div class="card-icon">⏰</div>
                 <div class="card-title">เวลาทำงานระบบ</div>
                 <div class="card-value">
@@ -341,7 +714,7 @@
                 <div class="card-time" id="lastUpdate">อัพเดทล่าสุด: --</div>
             </div>
 
-            <div class="card pump-card">
+            <div class="card pump-card" id="pumpCard">
                 <div class="card-icon">🚰</div>
                 <div class="card-title">ควบคุมปั๊มน้ำ</div>
                 <div class="pump-control">
@@ -352,13 +725,169 @@
                         ⚫ ปั๊มปิดอยู่
                     </div>
                 </div>
+
+                <!-- Auto Mode Section -->
+                <div class="auto-mode-section">
+                    <div class="toggle-switch">
+                        <span style="font-weight: bold;">🤖 โหมดอัตโนมัติ</span>
+                        <label class="switch">
+                            <input type="checkbox" id="autoModeToggle" onchange="toggleAutoMode()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="threshold-inputs" id="thresholdInputs" style="display: none;">
+                        <div class="input-group">
+                            <label>🔥 อุณหภูมิเปิดปั๊ม (°C)</label>
+                            <input type="number" id="tempHigh" value="35" min="0" max="50">
+                        </div>
+                        <div class="input-group">
+                            <label>❄️ อุณหภูมิปิดปั๊ม (°C)</label>
+                            <input type="number" id="tempLow" value="25" min="0" max="50">
+                        </div>
+                    </div>
+                </div>
+
                 <div class="card-time" id="pumpTime">อัพเดทล่าสุด: --</div>
             </div>
         </div>
 
         <div class="chart-card" id="chartCard" style="display: none;">
-            <h3 class="chart-title">📊 กราฟข้อมูลย้อนหลัง</h3>
+            <div class="chart-title">
+                <span>📊 กราฟข้อมูล</span>
+                <div class="chart-controls">
+                    <button class="chart-btn active" onclick="changeChartPeriod('realtime')">เรียลไทม์</button>
+                    <button class="chart-btn" onclick="changeChartPeriod('daily')">รายวัน</button>
+                    <button class="chart-btn" onclick="changeChartPeriod('weekly')">รายสัปดาห์</button>
+                </div>
+            </div>
             <canvas id="sensorChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Alert Container -->
+    <div class="alert-container" id="alertContainer"></div>
+
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">⚙️ ตั้งค่า</div>
+                <span class="modal-close" onclick="closeSettings()">×</span>
+            </div>
+
+            <div class="settings-section">
+                <div class="settings-title">🎨 เลือกธีมสี</div>
+                <div class="theme-options">
+                    <div class="theme-option active" onclick="changeTheme('default')">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #667eea, #764ba2)"></div>
+                        <div>Default</div>
+                    </div>
+                    <div class="theme-option" onclick="changeTheme('ocean')">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #2E3192, #1BFFFF)"></div>
+                        <div>Ocean</div>
+                    </div>
+                    <div class="theme-option" onclick="changeTheme('sunset')">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #FF512F, #F09819)"></div>
+                        <div>Sunset</div>
+                    </div>
+                    <div class="theme-option" onclick="changeTheme('forest')">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #134E5E, #71B280)"></div>
+                        <div>Forest</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <div class="settings-title">👁️ แสดง/ซ่อนการ์ด</div>
+                <div class="card-visibility">
+                    <div class="visibility-item">
+                        <span>💡 ความสว่าง</span>
+                        <label class="switch">
+                            <input type="checkbox" checked onchange="toggleCard('lightCard')">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="visibility-item">
+                        <span>🌡️ อุณหภูมิ</span>
+                        <label class="switch">
+                            <input type="checkbox" checked onchange="toggleCard('tempCard')">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="visibility-item">
+                        <span>⏰ เวลาทำงาน</span>
+                        <label class="switch">
+                            <input type="checkbox" checked onchange="toggleCard('uptimeCard')">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="visibility-item">
+                        <span>🚰 ปั๊มน้ำ</span>
+                        <label class="switch">
+                            <input type="checkbox" checked onchange="toggleCard('pumpCard')">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <div class="settings-title">🔔 การแจ้งเตือน</div>
+                <div class="card-visibility">
+                    <div class="visibility-item">
+                        <span>แจ้งเตือนอุณหภูมิสูง/ต่ำ</span>
+                        <label class="switch">
+                            <input type="checkbox" id="tempAlertToggle" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="visibility-item">
+                        <span>แจ้งเตือนความสว่าง</span>
+                        <label class="switch">
+                            <input type="checkbox" id="lightAlertToggle" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="visibility-item">
+                        <span>แจ้งเตือนการเชื่อมต่อขาด</span>
+                        <label class="switch">
+                            <input type="checkbox" id="connAlertToggle" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timer Modal -->
+    <div class="modal" id="timerModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">⏰ ตั้งเวลารดน้ำ</div>
+                <span class="modal-close" onclick="closeTimerModal()">×</span>
+            </div>
+
+            <div class="settings-section">
+                <div class="input-group">
+                    <label>🕐 เวลา</label>
+                    <input type="time" id="timerTime" style="width: 100%; padding: 10px; border-radius: 8px;">
+                </div>
+                <div class="input-group" style="margin-top: 15px;">
+                    <label>⏱️ ระยะเวลารด (นาที)</label>
+                    <input type="number" id="timerDuration" value="5" min="1" max="60" style="width: 100%; padding: 10px; border-radius: 8px;">
+                </div>
+                <button class="btn btn-success" style="width: 100%; margin-top: 15px;" onclick="addTimer()">➕ เพิ่มตารางรดน้ำ</button>
+            </div>
+
+            <div class="settings-section">
+                <div class="settings-title">📋 ตารางรดน้ำ</div>
+                <div class="timer-list" id="timerList">
+                    <div style="text-align: center; color: var(--text-light); padding: 20px;">
+                        ยังไม่มีตารางรดน้ำ
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -379,16 +908,78 @@
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
 
+        // Global variables
         const chartData = {
             labels: [],
             light: [],
             temperature: []
         };
 
-        const maxDataPoints = 20;
-        let currentPumpState = false;
+        const allData = {
+            light: [],
+            temperature: [],
+            timestamps: []
+        };
 
-        // ฟังก์ชันควบคุมปั๊ม
+        let currentPumpState = false;
+        let autoModeEnabled = false;
+        let alertsShown = {
+            tempHigh: false,
+            tempLow: false,
+            lightHigh: false,
+            lightLow: false
+        };
+        let timers = [];
+        let currentChartPeriod = 'realtime';
+        const maxDataPoints = 20;
+
+        // Theme Management
+        window.toggleTheme = function() {
+            document.body.classList.toggle('dark-mode');
+        };
+
+        window.changeTheme = function(theme) {
+            const root = document.documentElement;
+            document.querySelectorAll('.theme-option').forEach(el => el.classList.remove('active'));
+            event.target.closest('.theme-option').classList.add('active');
+
+            const themes = {
+                default: { primary: '#667eea', secondary: '#764ba2' },
+                ocean: { primary: '#2E3192', secondary: '#1BFFFF' },
+                sunset: { primary: '#FF512F', secondary: '#F09819' },
+                forest: { primary: '#134E5E', secondary: '#71B280' }
+            };
+
+            const colors = themes[theme];
+            root.style.setProperty('--primary', colors.primary);
+            root.style.setProperty('--secondary', colors.secondary);
+            root.style.setProperty('--bg-gradient', `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`);
+        };
+
+        // Settings Modal
+        window.openSettings = function() {
+            document.getElementById('settingsModal').classList.add('active');
+        };
+
+        window.closeSettings = function() {
+            document.getElementById('settingsModal').classList.remove('active');
+        };
+
+        // Timer Modal
+        window.openTimerModal = function() {
+            document.getElementById('timerModal').classList.add('active');
+        };
+
+        window.closeTimerModal = function() {
+            document.getElementById('timerModal').classList.remove('active');
+        };
+
+        // Card Visibility
+        window.toggleCard = function(cardId) {
+            document.getElementById(cardId).classList.toggle('hidden');
+        };
+
+        // Pump Control
         window.togglePump = function() {
             const newState = !currentPumpState;
             const pumpControlRef = ref(database, 'control/pumpControl');
@@ -396,14 +987,157 @@
             set(pumpControlRef, newState)
                 .then(() => {
                     console.log('Pump command sent:', newState);
+                    showAlert('success', 'สำเร็จ', `ส่งคำสั่ง${newState ? 'เปิด' : 'ปิด'}ปั๊มแล้ว`);
                 })
                 .catch((error) => {
-                    console.error('Error sending pump command:', error);
-                    alert('เกิดข้อผิดพลาดในการส่งคำสั่ง');
+                    console.error('Error:', error);
+                    showAlert('danger', 'ข้อผิดพลาด', 'ไม่สามารถส่งคำสั่งได้');
                 });
         };
 
-        // ฟังก์ชันอัพเดทแสดงผลสถานะปั๊ม
+        // Auto Mode
+        window.toggleAutoMode = function() {
+            autoModeEnabled = document.getElementById('autoModeToggle').checked;
+            document.getElementById('thresholdInputs').style.display = autoModeEnabled ? 'grid' : 'none';
+            showAlert('success', 'โหมดอัตโนมัติ', `${autoModeEnabled ? 'เปิด' : 'ปิด'}โหมดอัตโนมัติแล้ว`);
+        };
+
+        function checkAutoMode(temp) {
+            if (!autoModeEnabled) return;
+
+            const tempHigh = parseFloat(document.getElementById('tempHigh').value);
+            const tempLow = parseFloat(document.getElementById('tempLow').value);
+
+            if (temp >= tempHigh && !currentPumpState) {
+                set(ref(database, 'control/pumpControl'), true);
+                showAlert('warning', '🤖 โหมดอัตโนมัติ', `อุณหภูมิ ${temp}°C เกินกำหนด เปิดปั๊มน้ำ`);
+            } else if (temp <= tempLow && currentPumpState) {
+                set(ref(database, 'control/pumpControl'), false);
+                showAlert('success', '🤖 โหมดอัตโนมัติ', `อุณหภูมิ ${temp}°C ลดลง ปิดปั๊มน้ำ`);
+            }
+        }
+
+        // Timer Functions
+        window.addTimer = function() {
+            const time = document.getElementById('timerTime').value;
+            const duration = parseInt(document.getElementById('timerDuration').value);
+
+            if (!time) {
+                showAlert('warning', 'คำเตือน', 'กรุณาเลือกเวลา');
+                return;
+            }
+
+            const timer = { time, duration, id: Date.now() };
+            timers.push(timer);
+            updateTimerList();
+            document.getElementById('timerTime').value = '';
+            showAlert('success', 'สำเร็จ', `เพิ่มตารางรดน้ำเวลา ${time} เป็นเวลา ${duration} นาที`);
+        };
+
+        window.deleteTimer = function(id) {
+            timers = timers.filter(t => t.id !== id);
+            updateTimerList();
+            showAlert('success', 'สำเร็จ', 'ลบตารางรดน้ำแล้ว');
+        };
+
+        function updateTimerList() {
+            const list = document.getElementById('timerList');
+            if (timers.length === 0) {
+                list.innerHTML = '<div style="text-align: center; color: var(--text-light); padding: 20px;">ยังไม่มีตารางรดน้ำ</div>';
+                return;
+            }
+
+            list.innerHTML = timers.map(timer => `
+                <div class="timer-item">
+                    <div class="timer-info">
+                        <div class="timer-time">⏰ ${timer.time}</div>
+                        <div class="timer-duration">⏱️ ${timer.duration} นาที</div>
+                    </div>
+                    <div class="timer-actions">
+                        <button class="btn-small btn-danger" onclick="deleteTimer(${timer.id})">🗑️ ลบ</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function checkTimers() {
+            const now = new Date();
+            const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+            timers.forEach(timer => {
+                if (timer.time === currentTime && !currentPumpState) {
+                    set(ref(database, 'control/pumpControl'), true);
+                    showAlert('success', '⏰ ตารางรดน้ำ', `เริ่มรดน้ำตามตาราง ${timer.time}`);
+                    
+                    setTimeout(() => {
+                        set(ref(database, 'control/pumpControl'), false);
+                        showAlert('success', '⏰ ตารางรดน้ำ', 'หยุดรดน้ำตามตาราง');
+                    }, timer.duration * 60 * 1000);
+                }
+            });
+        }
+
+        setInterval(checkTimers, 60000);
+
+        // Alert System
+        function showAlert(type, title, message) {
+            const container = document.getElementById('alertContainer');
+            const alertId = Date.now();
+            
+            const alert = document.createElement('div');
+            alert.className = `alert ${type}`;
+            alert.innerHTML = `
+                <div class="alert-icon">${type === 'success' ? '✅' : type === 'warning' ? '⚠️' : '❌'}</div>
+                <div class="alert-content">
+                    <div class="alert-title">${title}</div>
+                    <div class="alert-message">${message}</div>
+                </div>
+                <div class="alert-close" onclick="this.parentElement.remove()">×</div>
+            `;
+            
+            container.appendChild(alert);
+            
+            setTimeout(() => alert.remove(), 5000);
+        }
+
+        function checkAlerts(light, temp) {
+            const tempAlertEnabled = document.getElementById('tempAlertToggle').checked;
+            const lightAlertEnabled = document.getElementById('lightAlertToggle').checked;
+
+            if (tempAlertEnabled) {
+                if (temp > 40 && !alertsShown.tempHigh) {
+                    showAlert('danger', '🔥 อุณหภูมิสูง', `อุณหภูมิ ${temp}°C สูงเกินไป!`);
+                    alertsShown.tempHigh = true;
+                } else if (temp <= 40) {
+                    alertsShown.tempHigh = false;
+                }
+
+                if (temp < 15 && !alertsShown.tempLow) {
+                    showAlert('warning', '❄️ อุณหภูมิต่ำ', `อุณหภูมิ ${temp}°C ต่ำเกินไป!`);
+                    alertsShown.tempLow = true;
+                } else if (temp >= 15) {
+                    alertsShown.tempLow = false;
+                }
+            }
+
+            if (lightAlertEnabled) {
+                if (light > 90 && !alertsShown.lightHigh) {
+                    showAlert('warning', '☀️ แสงแรง', `ความสว่าง ${light}% สูงมาก!`);
+                    alertsShown.lightHigh = true;
+                } else if (light <= 90) {
+                    alertsShown.lightHigh = false;
+                }
+
+                if (light < 10 && !alertsShown.lightLow) {
+                    showAlert('warning', '🌑 แสงน้อย', `ความสว่าง ${light}% ต่ำมาก!`);
+                    alertsShown.lightLow = true;
+                } else if (light >= 10) {
+                    alertsShown.lightLow = false;
+                }
+            }
+        }
+
+        // Update Pump UI
         function updatePumpUI(state) {
             currentPumpState = state;
             const button = document.getElementById('pumpButton');
@@ -422,22 +1156,68 @@
             }
             
             const now = new Date();
-            const timeString = now.toLocaleTimeString('th-TH');
-            document.getElementById('pumpTime').textContent = 'อัพเดทล่าสุด: ' + timeString;
+            document.getElementById('pumpTime').textContent = 'อัพเดทล่าสุด: ' + now.toLocaleTimeString('th-TH');
         }
 
-        // ฟังสถานะปั๊มจาก Firebase
+        // Statistics
+        function updateStatistics() {
+            if (allData.temperature.length === 0) return;
+
+            const temps = allData.temperature;
+            const lights = allData.light;
+
+            const avgTemp = (temps.reduce((a, b) => a + b, 0) / temps.length).toFixed(1);
+            const maxTemp = Math.max(...temps).toFixed(1);
+            const minTemp = Math.min(...temps).toFixed(1);
+            const avgLight = Math.round(lights.reduce((a, b) => a + b, 0) / lights.length);
+
+            document.getElementById('avgTemp').textContent = avgTemp + '°C';
+            document.getElementById('maxTemp').textContent = maxTemp + '°C';
+            document.getElementById('minTemp').textContent = minTemp + '°C';
+            document.getElementById('avgLight').textContent = avgLight + '%';
+        }
+
+        // Chart Period
+        window.changeChartPeriod = function(period) {
+            currentChartPeriod = period;
+            document.querySelectorAll('.chart-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            showAlert('success', 'สำเร็จ', `เปลี่ยนเป็นโหมด${period === 'realtime' ? 'เรียลไทม์' : period === 'daily' ? 'รายวัน' : 'รายสัปดาห์'}`);
+        };
+
+        // Download CSV
+        window.downloadCSV = function() {
+            if (allData.timestamps.length === 0) {
+                showAlert('warning', 'คำเตือน', 'ยังไม่มีข้อมูลให้ดาวน์โหลด');
+                return;
+            }
+
+            let csv = 'เวลา,ความสว่าง (%),อุณหภูมิ (°C)\n';
+            for (let i = 0; i < allData.timestamps.length; i++) {
+                csv += `${allData.timestamps[i]},${allData.light[i]},${allData.temperature[i]}\n`;
+            }
+
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `farm_data_${new Date().getTime()}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showAlert('success', 'สำเร็จ', 'ดาวน์โหลดข้อมูล CSV แล้ว');
+        };
+
+        // Firebase Listeners
         const pumpStatusRef = ref(database, 'status/pumpStatus');
         onValue(pumpStatusRef, (snapshot) => {
             const state = snapshot.val();
-            if (state !== null) {
-                updatePumpUI(state);
-            }
+            if (state !== null) updatePumpUI(state);
         });
 
-        // ฟังข้อมูลเซ็นเซอร์
         const sensorsRef = ref(database, 'sensors');
-        
         onValue(sensorsRef, (snapshot) => {
             const data = snapshot.val();
             
@@ -445,60 +1225,56 @@
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('dashboard').style.display = 'grid';
                 document.getElementById('chartCard').style.display = 'block';
+                document.getElementById('statsSummary').style.display = 'grid';
 
                 const statusEl = document.getElementById('status');
-                const statusText = document.getElementById('statusText');
                 statusEl.className = 'status connected';
-                statusText.textContent = '✅ เชื่อมต่อสำเร็จ';
+                statusEl.querySelector('#statusText').textContent = '✅ เชื่อมต่อสำเร็จ';
 
                 const light = data.light || 0;
-                document.getElementById('lightValue').textContent = light;
-                document.getElementById('lightLevel').style.width = light + '%';
-
                 const temp = data.temperature || 0;
-                document.getElementById('tempValue').textContent = temp.toFixed(1);
-                const tempPercent = Math.min(Math.max(((temp - 0) / 50) * 100, 0), 100);
-                document.getElementById('tempLevel').style.width = tempPercent + '%';
-
-                const timestamp = data.timestamp || 0;
-                const uptimeMinutes = Math.floor(timestamp / 60);
-                document.getElementById('uptimeValue').textContent = uptimeMinutes;
-
                 const now = new Date();
                 const timeString = now.toLocaleTimeString('th-TH');
+
+                document.getElementById('lightValue').textContent = light;
+                document.getElementById('tempValue').textContent = temp.toFixed(1);
+                document.getElementById('uptimeValue').textContent = Math.floor((data.timestamp || 0) / 60);
+
                 document.getElementById('lightTime').textContent = 'อัพเดทล่าสุด: ' + timeString;
                 document.getElementById('tempTime').textContent = 'อัพเดทล่าสุด: ' + timeString;
                 document.getElementById('lastUpdate').textContent = 'อัพเดทล่าสุด: ' + timeString;
 
-                updateChartData(timeString, light, temp);
-            } else {
-                const statusEl = document.getElementById('status');
-                const statusText = document.getElementById('statusText');
-                statusEl.className = 'status disconnected';
-                statusText.textContent = '⚠️ ไม่พบข้อมูล';
+                // Store all data
+                allData.light.push(light);
+                allData.temperature.push(temp);
+                allData.timestamps.push(timeString);
+
+                // Keep last 100 data points
+                if (allData.light.length > 100) {
+                    allData.light.shift();
+                    allData.temperature.shift();
+                    allData.timestamps.shift();
+                }
+
+                // Update chart data
+                chartData.labels.push(timeString);
+                chartData.light.push(light);
+                chartData.temperature.push(temp);
+
+                if (chartData.labels.length > maxDataPoints) {
+                    chartData.labels.shift();
+                    chartData.light.shift();
+                    chartData.temperature.shift();
+                }
+
+                updateChart();
+                updateStatistics();
+                checkAlerts(light, temp);
+                checkAutoMode(temp);
             }
-        }, (error) => {
-            console.error('Error reading data:', error);
-            const statusEl = document.getElementById('status');
-            const statusText = document.getElementById('statusText');
-            statusEl.className = 'status disconnected';
-            statusText.textContent = '❌ เชื่อมต่อล้มเหลว';
         });
 
-        function updateChartData(time, light, temp) {
-            chartData.labels.push(time);
-            chartData.light.push(light);
-            chartData.temperature.push(temp);
-
-            if (chartData.labels.length > maxDataPoints) {
-                chartData.labels.shift();
-                chartData.light.shift();
-                chartData.temperature.shift();
-            }
-
-            updateChart();
-        }
-
+        // Chart
         const ctx = document.getElementById('sensorChart');
         let chart = null;
 
@@ -529,24 +1305,14 @@
                     },
                     options: {
                         responsive: true,
-                        interaction: {
-                            mode: 'index',
-                            intersect: false,
-                        },
-                        plugins: {
-                            legend: {
-                                position: 'top',
-                            }
-                        },
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: { legend: { position: 'top' } },
                         scales: {
                             y: {
                                 type: 'linear',
                                 display: true,
                                 position: 'left',
-                                title: {
-                                    display: true,
-                                    text: 'ความสว่าง (%)'
-                                },
+                                title: { display: true, text: 'ความสว่าง (%)' },
                                 min: 0,
                                 max: 100
                             },
@@ -554,13 +1320,8 @@
                                 type: 'linear',
                                 display: true,
                                 position: 'right',
-                                title: {
-                                    display: true,
-                                    text: 'อุณหภูมิ (°C)'
-                                },
-                                grid: {
-                                    drawOnChartArea: false,
-                                }
+                                title: { display: true, text: 'อุณหภูมิ (°C)' },
+                                grid: { drawOnChartArea: false }
                             }
                         }
                     }
@@ -572,6 +1333,9 @@
                 chart.update();
             }
         }
+
+        // Expose functions to window
+        window.deleteTimer = deleteTimer;
     </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
